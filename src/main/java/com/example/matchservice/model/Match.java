@@ -28,7 +28,7 @@ public class Match {
     private LocalDate match_date;
 
     @NotNull
-    @JsonFormat(pattern = "HH:mm") // 24-hour format
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime match_time;
 
     @NotBlank

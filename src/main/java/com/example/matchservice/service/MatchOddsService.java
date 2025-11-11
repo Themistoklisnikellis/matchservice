@@ -1,11 +1,10 @@
 package com.example.matchservice.service;
 
-import com.example.matchservice.model.Match;
 import com.example.matchservice.model.MatchOdds;
 import com.example.matchservice.repository.MatchOddsRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
@@ -27,50 +26,43 @@ public class MatchOddsService {
         return matchOddsRepository.findById(id);
     }
 
-    public MatchOdds createOdd(MatchOdds odd) {
+    public void createOdd(MatchOdds odd) {
         try {
-            return matchOddsRepository.save(odd);
+            matchOddsRepository.save(odd);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Duplicate odd or invalid match_id.");
+            throw new IllegalArgumentException("Duplicate odd or invalid match_id");
         }
     }
 
-    public List<MatchOdds> createOddsBatch(List<MatchOdds> odds) {
+    public void createOddsBatch(List<MatchOdds> odds) {
         try {
-            return matchOddsRepository.saveAll(odds);
+            matchOddsRepository.saveAll(odds);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Duplicate odd or invalid match_id.");
+            throw new IllegalArgumentException("Duplicate odd or invalid match_id in batch");
         }
     }
 
-    public boolean updateOdd(Long id, MatchOdds updatedOdd) {
-        return matchOddsRepository.findById(id).map(odd -> {
-            odd.setSpecifier(updatedOdd.getSpecifier());
-            odd.setOdd(updatedOdd.getOdd());
-            odd.setMatch(updatedOdd.getMatch());
-            matchOddsRepository.save(odd);
-            return true;
-        }).orElse(false);
-    }
+    public void patchOdd(Long id, Map<String, Object> updates) {
+        MatchOdds odd = matchOddsRepository.findById(id)
+                .orElseThrow(() -> new EmptyResultDataAccessException("Match odd not found", 1));
 
-    public boolean patchOdd(Long id, Map<String, Object> updates) {
-        return matchOddsRepository.findById(id).map(odd -> {
-            if (updates.containsKey("specifier")) {
-                odd.setSpecifier((String) updates.get("specifier"));
-            }
-            if (updates.containsKey("odd")) {
-                odd.setOdd(Double.valueOf(updates.get("odd").toString()));
-            }
-            matchOddsRepository.save(odd);
-            return true;
-        }).orElse(false);
-    }
-
-    public boolean deleteOdd(Long id) {
-        if (matchOddsRepository.existsById(id)) {
-            matchOddsRepository.deleteById(id);
-            return true;
+        // Only allow updating "odd" field
+        if (updates.size() != 1 || !updates.containsKey("odd")) {
+            throw new IllegalArgumentException("Only 'odd' field can be modified.");
         }
-        return false;
+
+        try {
+            odd.setOdd(Double.valueOf(updates.get("odd").toString()));
+            matchOddsRepository.save(odd);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid value for odd. Must be a number.");
+        }
+    }
+
+    public void deleteOdd(Long id) {
+        if (!matchOddsRepository.existsById(id)) {
+            throw new EmptyResultDataAccessException(1);
+        }
+        matchOddsRepository.deleteById(id);
     }
 }

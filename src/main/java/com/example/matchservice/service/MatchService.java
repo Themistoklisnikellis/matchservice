@@ -2,10 +2,9 @@ package com.example.matchservice.service;
 
 import com.example.matchservice.model.Match;
 import com.example.matchservice.repository.MatchRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -33,73 +32,61 @@ public class MatchService {
         matchRepository.save(match);
     }
 
-    public List<Match> createMatchesBatch(List<Match> matches) {
-        return matchRepository.saveAll(matches);
+    public void createMatchesBatch(List<Match> matches) {
+        matchRepository.saveAll(matches);
     }
 
-    public boolean updateMatch(Long id, Match updatedMatch) {
-        return matchRepository.findById(id).map(match -> {
-            match.setDescription(updatedMatch.getDescription());
-            match.setMatch_date(updatedMatch.getMatch_date());
-            match.setMatch_time(updatedMatch.getMatch_time());
-            match.setTeam_a(updatedMatch.getTeam_a());
-            match.setTeam_b(updatedMatch.getTeam_b());
-            match.setSport(updatedMatch.getSport());
-            matchRepository.save(match);
-            return true;
-        }).orElse(false);
+    public void updateMatch(Long id, Match updatedMatch) {
+        Match match = matchRepository.findById(id)
+                .orElseThrow(() -> new EmptyResultDataAccessException("Match not found", 1));
+
+        match.setDescription(updatedMatch.getDescription());
+        match.setMatch_date(updatedMatch.getMatch_date());
+        match.setMatch_time(updatedMatch.getMatch_time());
+        match.setTeam_a(updatedMatch.getTeam_a());
+        match.setTeam_b(updatedMatch.getTeam_b());
+        match.setSport(updatedMatch.getSport());
+
+        matchRepository.save(match);
     }
 
-    public boolean patchMatch(Long id, Map<String, Object> updates) {
+    public void patchMatch(Long id, Map<String, Object> updates) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-        return matchRepository.findById(id).map(match -> {
-            try {
-                if (updates.containsKey("description")) {
-                    match.setDescription((String) updates.get("description"));
-                }
+        // Fetch match or throw 404
+        Match match = matchRepository.findById(id)
+                .orElseThrow(() -> new EmptyResultDataAccessException("Match not found", 1));
 
-                if (updates.containsKey("match_date")) {
-                    String dateStr = (String) updates.get("match_date");
-                    LocalDate date = LocalDate.parse(dateStr, dateFormatter);
-                    match.setMatch_date(date);
-                }
+        // Update fields if present
+        if (updates.containsKey("description")) {
+            match.setDescription((String) updates.get("description"));
+        }
+        if (updates.containsKey("match_date")) {
+            String dateStr = (String) updates.get("match_date");
+            match.setMatch_date(LocalDate.parse(dateStr, dateFormatter)); // may throw DateTimeParseException
+        }
+        if (updates.containsKey("match_time")) {
+            String timeStr = (String) updates.get("match_time");
+            match.setMatch_time(LocalTime.parse(timeStr, timeFormatter)); // may throw DateTimeParseException
+        }
+        if (updates.containsKey("team_a")) {
+            match.setTeam_a((String) updates.get("team_a"));
+        }
+        if (updates.containsKey("team_b")) {
+            match.setTeam_b((String) updates.get("team_b"));
+        }
+        if (updates.containsKey("sport")) {
+            match.setSport(Match.Sport.valueOf((String) updates.get("sport"))); // may throw IllegalArgumentException
+        }
 
-                if (updates.containsKey("match_time")) {
-                    String timeStr = (String) updates.get("match_time");
-                    LocalTime time = LocalTime.parse(timeStr, timeFormatter);
-                    match.setMatch_time(time);
-                }
-
-                if (updates.containsKey("team_a")) {
-                    match.setTeam_a((String) updates.get("team_a"));
-                }
-
-                if (updates.containsKey("team_b")) {
-                    match.setTeam_b((String) updates.get("team_b"));
-                }
-
-                if (updates.containsKey("sport")) {
-                    match.setSport(Match.Sport.valueOf((String) updates.get("sport")));
-                }
-
-                matchRepository.save(match);
-                return true;
-
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid date or time format: " + e.getParsedString());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid sport value: " + updates.get("sport"));
-            }
-        }).orElse(false);
+        matchRepository.save(match);
     }
 
-    public boolean deleteMatch(Long id) {
-        if (matchRepository.existsById(id)) {
-            matchRepository.deleteById(id);
-            return true;
+    public void deleteMatch(Long id) {
+        if (!matchRepository.existsById(id)) {
+            throw new EmptyResultDataAccessException(1);
         }
-        return false;
+        matchRepository.deleteById(id);
     }
 }
