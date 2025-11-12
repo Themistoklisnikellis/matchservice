@@ -10,6 +10,7 @@ git clone https://github.com/Themistoklisnikellis/matchservice.git
 2. Setup Environment File
 
 cd matchservice
+
 copy .env.example .env
 
 3. Run the Application
