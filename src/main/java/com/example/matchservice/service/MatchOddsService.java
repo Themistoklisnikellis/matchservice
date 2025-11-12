@@ -27,19 +27,11 @@ public class MatchOddsService {
     }
 
     public void createOdd(MatchOdds odd) {
-        try {
-            matchOddsRepository.save(odd);
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Duplicate odd or invalid match_id");
-        }
+        matchOddsRepository.save(odd);
     }
 
     public void createOddsBatch(List<MatchOdds> odds) {
-        try {
-            matchOddsRepository.saveAll(odds);
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Duplicate odd or invalid match_id in batch");
-        }
+        matchOddsRepository.saveAll(odds);
     }
 
     public void patchOdd(Long id, Map<String, Object> updates) {
@@ -51,12 +43,8 @@ public class MatchOddsService {
             throw new IllegalArgumentException("Only 'odd' field can be modified.");
         }
 
-        try {
-            odd.setOdd(Double.valueOf(updates.get("odd").toString()));
-            matchOddsRepository.save(odd);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid value for odd. Must be a number.");
-        }
+        odd.setOdd(Double.valueOf(updates.get("odd").toString()));
+        matchOddsRepository.save(odd);
     }
 
     public void deleteOdd(Long id) {

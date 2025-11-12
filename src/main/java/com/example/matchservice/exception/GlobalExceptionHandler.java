@@ -1,6 +1,7 @@
 package com.example.matchservice.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,8 +61,25 @@ public class GlobalExceptionHandler {
         } else if (e instanceof IllegalArgumentException) {
             message = e.getMessage();
         } else {
-            message = "Invalid input";
+            message = "Invalid request";
         }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("status", "error", "message", message));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        String rootMessage = e.getMostSpecificCause().getMessage().toLowerCase();
+        String message;
+
+        if (rootMessage.contains("match_id_specifier")) {
+            message = "Duplicate odd for this match and specifier";
+        } else if (rootMessage.contains("match_id")) {
+            message = "Invalid match_id — match does not exist";
+        } else {
+            message = "Database constraint violation";
+        }
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("status", "error", "message", message));
     }

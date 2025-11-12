@@ -54,7 +54,7 @@ public class MatchService {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-        // Fetch match or throw 404
+        // Find match or throw 404
         Match match = matchRepository.findById(id)
                 .orElseThrow(() -> new EmptyResultDataAccessException("Match not found", 1));
 

@@ -79,7 +79,6 @@ public class MatchController {
     }
 
     // Match odds endpoints
-
     @GetMapping("/odds")
     public List<MatchOdds> getAllOdds() {
         return matchOddsService.getAllOdds();
