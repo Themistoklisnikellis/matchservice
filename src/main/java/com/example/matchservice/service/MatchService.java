@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
 
 @Service
@@ -24,8 +23,9 @@ public class MatchService {
         return matchRepository.findAll();
     }
 
-    public Optional<Match> getMatchById(Long id) {
-        return matchRepository.findById(id);
+    public Match getMatchById(Long id) {
+        return matchRepository.findById(id)
+                .orElseThrow(() -> new EmptyResultDataAccessException(1));
     }
 
     public void createMatch(Match match) {
@@ -38,7 +38,7 @@ public class MatchService {
 
     public void updateMatch(Long id, Match updatedMatch) {
         Match match = matchRepository.findById(id)
-                .orElseThrow(() -> new EmptyResultDataAccessException("Match not found", 1));
+                .orElseThrow(() -> new EmptyResultDataAccessException(1));
 
         match.setDescription(updatedMatch.getDescription());
         match.setMatch_date(updatedMatch.getMatch_date());
@@ -56,7 +56,7 @@ public class MatchService {
 
         // Find match or throw 404
         Match match = matchRepository.findById(id)
-                .orElseThrow(() -> new EmptyResultDataAccessException("Match not found", 1));
+                .orElseThrow(() -> new EmptyResultDataAccessException(1));
 
         // Update fields if present
         if (updates.containsKey("description")) {
@@ -64,11 +64,11 @@ public class MatchService {
         }
         if (updates.containsKey("match_date")) {
             String dateStr = (String) updates.get("match_date");
-            match.setMatch_date(LocalDate.parse(dateStr, dateFormatter)); // may throw DateTimeParseException
+            match.setMatch_date(LocalDate.parse(dateStr, dateFormatter));
         }
         if (updates.containsKey("match_time")) {
             String timeStr = (String) updates.get("match_time");
-            match.setMatch_time(LocalTime.parse(timeStr, timeFormatter)); // may throw DateTimeParseException
+            match.setMatch_time(LocalTime.parse(timeStr, timeFormatter));
         }
         if (updates.containsKey("team_a")) {
             match.setTeam_a((String) updates.get("team_a"));
@@ -77,7 +77,7 @@ public class MatchService {
             match.setTeam_b((String) updates.get("team_b"));
         }
         if (updates.containsKey("sport")) {
-            match.setSport(Match.Sport.valueOf((String) updates.get("sport"))); // may throw IllegalArgumentException
+            match.setSport(Match.Sport.valueOf((String) updates.get("sport")));
         }
 
         matchRepository.save(match);
